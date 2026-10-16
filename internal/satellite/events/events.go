@@ -22,7 +22,7 @@ func createHTTPClient(tlsCfg config.TLSConfig, useUnsecure bool) (*http.Client, 
 			MinVersion: tls.VersionTLS12,
 		}
 		transport.TLSClientConfig.InsecureSkipVerify = useUnsecure
-	} else if tlsCfg.CertFile != "" || tlsCfg.CAFile != "" {
+	} else if tlsCfg.CertFile != "" || tlsCfg.CAFile != "" || tlsCfg.SkipVerify {
 		cfg := &satTLS.Config{
 			CertFile:   tlsCfg.CertFile,
 			KeyFile:    tlsCfg.KeyFile,

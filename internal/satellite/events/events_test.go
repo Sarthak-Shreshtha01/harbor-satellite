@@ -3,6 +3,7 @@ package events
 import (
 	"crypto/tls"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 	"time"
 
@@ -89,5 +90,28 @@ func TestCreateHTTPClient_CAFileOnlyTriggersLoad(t *testing.T) {
 	_, err := createHTTPClient(tlsCfg, false)
 	if err == nil {
 		t.Fatal("expected error for nonexistent CA file, got nil")
+	}
+}
+
+func TestCreateHTTPClient_SkipVerifyOnly(t *testing.T) {
+	server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer server.Close()
+
+	// skip_verify without a cert or CA file must still skip verification
+	// of the server's self-signed certificate.
+	client, err := createHTTPClient(config.TLSConfig{SkipVerify: true}, false)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	resp, err := client.Get(server.URL)
+	if err != nil {
+		t.Fatalf("request with skip_verify failed: %v", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		t.Errorf("expected status 200, got %d", resp.StatusCode)
 	}
 }
